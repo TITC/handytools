@@ -1,0 +1,3 @@
+[submodule "/home/yhtao/git_repository/nlptools/words/cutword/ddparser"]
+	path = /home/yhtao/git_repository/nlptools/words/cutword/ddparser
+	url = https://github.com/baidu/DDParser.git
