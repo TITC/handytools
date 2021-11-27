@@ -8,10 +8,44 @@ import ast
 import os
 import re
 import numpy as np
+from numpy import random
 from tqdm.std import tqdm
 from urllib.parse import quote, unquote
-
 from datetime import datetime
+import string
+
+
+def get_a_random_probability():
+    """随机生成一个0~1之间的数字,均匀分布uniform distribution
+
+    Returns:
+        [type]: [description]
+    """
+    return random.uniform(0, 1)
+
+
+def get_window_content(idx, whole_context, windows_size):
+    """给定完整上下文，以及中心词汇下标，返回中心词汇的上下文窗口
+
+    Args:
+        idx ([type]): 中心下标
+        whole_context ([type]): 完整的上下文
+        windows_size ([type]): 窗口大小
+
+    Returns:
+        [type]: [description]
+    """
+    neighbors = []
+    length = len(whole_context)
+    # 窗口左边界下标
+    left_idx = max(idx-windows_size//2, 0)
+    # 完整窗口坐标list
+    window_idx = list(range(left_idx, idx)) + [idx] + \
+        list(range(idx+1, min(idx+windows_size//2+1, length)))
+    # 完整窗口内容
+    window_content = [whole_context[i] for i in window_idx]
+
+    return "".join(window_content)
 
 
 def get_current_time():
@@ -359,16 +393,77 @@ def UNK_alignment(unk_text, unks, tokenizer):
     return deunk_text
 
 
-def extract_zh(text):
+def extract_zh(text, join_group=True):
     """提取中文字符
 
     Args:
         text ([type]): [description]
     """
-    pre = re.compile(u'[\u4e00-\u9fa5]')
+    pre = re.compile(u'[\u4e00-\u9fa5]+')
+    res = re.findall(pre, text)
+    if join_group:
+        result = ''.join(res)
+    else:
+        result = res
+    return result
+
+
+def extract_num(text):
+    """提取数字
+
+    Args:
+        text ([type]): [description]
+    """
+    pattern = re.compile(r'\d+')
+    result = re.findall(pattern, text)
+    return result
+
+
+def zh_punctuation(text):
+    """字符串是否以中文标点符号
+
+    Args:
+        text ([type]): [description]
+    """
+    pre = re.compile(
+        u'[\u3002\uff1b\uff0c\uff1a\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b]')
     res = re.findall(pre, text)
     res1 = ''.join(res)
     return res1
+
+
+def string_end_with_punctuation(text):
+    """判断句子是否以标点符号结尾
+
+    Args:
+        text (string): 句子
+
+    Returns:
+        bool: 是否以标点符号结尾
+    """
+    if len(text) == 0:
+        return True
+    punctuation = string.punctuation+"。，！？；："
+    punctuation = punctuation.replace(",", "")
+    if text[-1] in punctuation:
+        return True
+    else:
+        return False
+
+
+def string_start_with_number(text):
+    """判断字符串是否以数字开头
+
+    Args:
+        text (string): 字符串
+
+    Returns:
+        bool: True or False
+    """
+    if text[0].isdigit():
+        return True
+    else:
+        return False
 
 
 def detect_repeat(text, expression=r'([\u4e00-\u9fa5])(\1+)'):
@@ -574,6 +669,12 @@ def extract_en(text):
     return en
 
 
+def extract(text, pattern=r'[^\u4e00-\u9fa5,.，。\(\)]+'):
+    pattern = re.compile(pattern)
+    results = re.findall(pattern, text)
+    return results
+
+
 def type_restore(value):
     """将字符串恢复为其原来的数据类型
 
@@ -609,20 +710,32 @@ def colourful_text(text, color):
 
     Args:
         text (str): [description]
-        color (str): red, green, yello, blue, black
+        color (str): red, green, yello, blue, black, none
     """
     colourful = {"red": u"\033[1;31;1m%s\033[0m",
                  "green": u"\033[1;32;1m%s\033[0m",
                  "yello": u"\033[1;33;1m%s\033[0m",
                  "blue": u"\033[1;34;1m%s\033[0m",
                  "black": u"\033[1;30;1m%s\033[0m"}
-    return colourful[color] % text
+    return colourful[color] % text if color != "none" else text
 
 
 def similar(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
+def iszh(text):
+    """
+    判断是否是中文
+    :param text:
+    :return:
+    """
+    for ch in text:
+        if not '\u4e00' <= ch <= '\u9fff':
+            return False
+    return True
+
+
 if __name__ == "__main__":
-    text1 = "天天向上，好好学习"
-    print(detect_repeat(text1))
+    text = "hello, python. 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好，python"
+    print(len(text) / len(text.encode('utf-8')))
