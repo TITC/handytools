@@ -29,6 +29,23 @@ import pandas as pd
 import traceback
 
 
+def get_newpath(pypath, filename: str, subfolder=""):
+    """传入调用路径，文件名，子文件夹名，返回新的路径
+    Args:
+        pypath (str): 调用路径
+        filename (str): 文件名
+        subfolder (str, optional): 子文件夹名. Defaults to "".
+    Returns:
+        str: 新的路径
+    """
+    pypath = parent_dir(pypath, 1)
+    if subfolder:
+        newpath = path.join(pypath, subfolder, filename)
+    else:
+        newpath = path.join(pypath, filename)
+    return newpath
+
+
 def read_lines_as_list(file_path):
     with open(file_path) as f:
         List = f.read().splitlines()
@@ -75,8 +92,8 @@ def testsplit_dict():
         print(idx, len(bd), type(bd))
 
 
-def sort_dict_by_value(d, reverse=False):
-    return dict(sorted(d.items(), key=lambda x: x[1], reverse=reverse))
+def sort_dict_by_value(d, increase=True):
+    return dict(sorted(d.items(), key=lambda x: x[1], reverse=not increase))
 
 
 def parent_dir(path: str, layers: int = 1):
@@ -95,7 +112,7 @@ def parent_dir(path: str, layers: int = 1):
     return path
 
 
-def glob_text(text_path, read, show_bar=False):
+def glob_text(text_path, read_fun, stop_i=None,  show_bar=False):
     """对给定路径下所有符合命名规则的文本按行进行读取
 
     Args:
@@ -105,16 +122,70 @@ def glob_text(text_path, read, show_bar=False):
         [list]: 按行读取后的文本list
     """
     text_list = []
-    txts = glob.glob(text_path)
+    pathlist = glob.glob(text_path)
     if show_bar:
-        w = tqdm(txts, desc=u'已获取0篇文章')
+        w = tqdm(pathlist, desc=u'已加载0个text')
     else:
-        w = txts
+        w = pathlist
     for i, txt in enumerate(w):
-        text_list.extend(readtexts(txt, show_bar=False))
+        if stop_i is not None and i > stop_i:
+            break
+        text_list.extend(read_fun(txt, show_bar=False))
         if show_bar:
-            w.set_description(u'已处理%s个text' % str(i+1))
-    return text_list
+            w.set_description(u'已加载%s个text' % str(i+1))
+    return text_list, pathlist
+
+
+def readtexts(path, portion=1, end: int = None, show_bar=True, encoding="utf-8"):
+    """将txt的每一行读出来
+
+    Args:
+        txt_path (string): 文件路径
+        portion (int, optional): 读出文件比例，比如只需要对一部分看看. Defaults to 1.
+        end (int, optional): 指定读到哪一行为止. Defaults to None.
+        showBar (bool, optional): 是否显示进度条. Defaults to True.
+        encoding (str,optional): 'UTF-8-sig'  "utf-8" 'urt8'
+    Returns:
+        list: each elements is a row
+    """
+    data_file = []
+    with open(path, "r+", encoding=encoding) as f:
+        if end is None:
+            num_lines = len([1 for line in open(path, "r", encoding=encoding)])
+            num_lines *= portion
+        else:
+            num_lines = end
+        if show_bar:
+            for idx, item in enumerate(
+                    tqdm(f, total=num_lines, desc=path.split(os.sep)[-1] + " is loading...")):
+                if idx >= num_lines:
+                    break
+                data_file.append(item.replace("\n", ""))
+        else:
+            for idx, item in enumerate(f):
+                if idx >= num_lines:
+                    break
+                data_file.append(item.replace("\n", ""))
+    return data_file
+
+
+def readjsonline(jsonl_path, show_bar=False):
+    """read jsonline file
+
+    Args:
+        jsonl_path ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+    with open(jsonl_path, "r+", encoding="utf8") as f:
+        lines = len([1 for line in open(
+            jsonl_path, "r", encoding="utf-8")])
+        data_file = []
+        for i, item in enumerate(tqdm(jsonlines.Reader(f), total=lines, desc=u'jsonl is loading...')):
+            data_file.append(item)
+    return data_file
 
 
 def print_files_size_in_list(root_path, path_list):
@@ -134,7 +205,7 @@ def head_n_pkl(path, nums):
             print(key, val)
 
 
-def save2pkl(save_path, obj):
+def save2pkl(obj, save_path):
     f = open(save_path, "wb")
     pickle.dump(obj, f)
     f.close()
@@ -144,29 +215,6 @@ def readpkl(dict_path):
     with open(dict_path, "rb") as f:
         dict_object = pickle.load(f)
     return dict_object
-
-
-def load_good_word():
-    """
-     读取武耀专业词库
-    """
-    word_dict = {}
-    with open("/data/unilm_write/model_file/new_good.txt",
-              "r",
-              encoding="utf-8") as read:
-        raw_data = read.read()
-        for line_data in raw_data.split("\n"):
-            w2f = line_data.split(" : ")
-            try:
-                if int(w2f[1]) * len(w2f[0]) > 6:
-                    if len(w2f[0]) > 12 and (len(w2f[0]) - 12) * int(
-                            w2f[1]) > 6:
-                        pass
-                    else:
-                        word_dict[w2f[0]] = w2f[1]
-            except IndexError:
-                print(line_data)
-    return word_dict
 
 
 def resavejson2txt(raw_path, tgt_path, key_name):
@@ -341,41 +389,6 @@ def append_list2file(file_path, my_list, show_bar=False):
         return False
 
 
-def readtexts(path, portion=1, end: int = None, show_bar=True, encoding="utf-8"):
-    """将txt的每一行读出来
-
-    Args:
-        txt_path (string): 文件路径
-        portion (int, optional): 读出文件比例，比如只需要对一部分看看. Defaults to 1.
-        end (int, optional): 指定读到哪一行为止. Defaults to None.
-        showBar (bool, optional): 是否显示进度条. Defaults to True.
-        encoding (str,optional): 'UTF-8-sig'  "utf-8" 'urt8'
-    Returns:
-        list: each elements is a row
-    """
-    data_file = []
-
-    num_lines = len([1 for line in open(path, "r", encoding=encoding)])
-
-    with open(path, "r+", encoding=encoding) as f:
-        if end is None:
-            num_lines *= portion
-        else:
-            num_lines = end
-        if show_bar:
-            for idx, item in enumerate(
-                    tqdm(f, total=num_lines, desc=path.split(os.sep)[-1] + " is loading...")):
-                if idx >= num_lines:
-                    break
-                data_file.append(item.replace("\n", ""))
-        else:
-            for idx, item in enumerate(f):
-                if idx >= num_lines:
-                    break
-                data_file.append(item.replace("\n", ""))
-    return data_file
-
-
 def readjsonl_bykey(jsonl_path, key_name, skip=-1):
     """按key读取json文件中的value
 
@@ -442,24 +455,6 @@ def read_cnsd2txt(txt_path):
             label = labels.index(l['gold_label']) + 2
             D.append((text1, text2, label))
     return D
-
-
-def readjsonline(jsonl_path, skip=-1):
-    """read jsonline file
-
-    Args:
-        jsonl_path ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    num_lines = len([1 for line in open(jsonl_path, "r", encoding="utf-8")])
-    with open(jsonl_path, "r+", encoding="utf8") as f:
-        data_file = []
-        for idx, item in enumerate(
-                jsonlines.Reader(tqdm(f, total=num_lines, desc="loading..."))):
-            data_file.append(item)
-    return data_file
 
 
 def readjson(path):
@@ -665,43 +660,48 @@ if __name__ == '__main__':
     # ====================================================================================================================
     # 获取目录
     # sub_folders = get_all_sub_folders(
-    #     "file path")
+    #     path)
     # print(len(sub_folders))
+    # json = readjsonline(
+    #     path)
+    # print(json)
+    # =====================================================================================================================
+    print(sort_dict_by_value({"a": 3, "b": 2, "c": 1}, increase=False))
     # ====================================================================================================================
     # 读csv文件
-    csv = read_tsvfile(
-        "file path")
-    print("test")
+    # csv = read_tsvfile(
+    #     path)
+    # print(path)
     # ====================================================================================================================
     # 清空目录
     # cleanfolder(
-    #     "file path")
+    #     path)
     # print(
     #     file_size(
-    #         "file path"))
+    #         path))
     # ====================================================================================================================
     # 获取指定文件夹同后缀名数据
     # files = files_with_extension(
-    #     "file path",
+    #     "/yuhang/draft/data/function_data_source/word_frequency/field/txtperline_2021-10-26/csv",
     #     'csv')
-    # # print(files.index("E9.txt"))
+    # # print(files.index(path))
     # print(len(files))
     # print(files)
     # ====================================================================================================================
     # 递归复制文件
     # copy_file_recursive(
-    #     "file path",
-    #     "file path"
+    #     "/yuhang/trained_model/bert-base-multilingual-cased-paswx-6lan/checkpoint-500",
+    #     "/yuhang/trained_model/bert-base-multilingual-cased-paswx-6lan/multilingual/checkpoint-start"
     # )
     # ====================================================================================================================
     # 读文件
     # file_name = "F2"  # TP,T4,R7
     # txt = readtxt(
-    #     "file path" % file_name)
+    #     "/yuhang/draft/data/function_data_source/knowledge_base/categories_detail/category_detail2/%s.txt" % file_name)
     # sum_count = 0
     # for ele in txt:
     #     sum_count += len(ele)
     # ngrams = read_pkl(
-    #     "file path" % file_name)
+    #     "/yuhang/draft/Lab/new-word-discovery/vocab-raw/category_detail2_freq0/ngram/%s.pkl" % file_name)
     # ngrams_count = sum([ngrams[i]for i in ngrams])
     # print("总字数为%s字,ngram中所有key的频次累加和为%s" % (sum_count, ngrams_count))
