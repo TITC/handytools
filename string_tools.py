@@ -750,10 +750,10 @@ def remove_blank(text):
     # filter blank space between Chinese characters
     text = re.sub(r'([\u4e00-\u9fa5])([\u0020])', r'\1', text)
     # remove blank space between English characters and Chinese characters
-    text = re.sub(r'([a-zA-Z])([\u0020])([\u4e00-\u9fa5])', r'\1\3', text)
+    text = re.sub(r'([\u0020])([\u4e00-\u9fa5])', r'\2', text)
     return text
 
 
 if __name__ == "__main__":
-    text = "hello, python. 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好，python"
-    print(len(text) / len(text.encode('utf-8')))
+    text = "比如 Convolutional Neural Network，CNN 对应中 文是卷 积神 经网络。"
+    print(remove_blank(text))
