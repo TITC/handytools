@@ -736,6 +736,24 @@ def iszh(text):
     return True
 
 
+def remove_blank(text):
+    """
+    Args:
+        text (str): input text, contains blank between zh and en, zh and zh, en and en
+    Returns:
+        str: text without blank between zh and en, zh and zh, but keep en and en
+        example:
+        >>> text = "比如 Convolutional Neural Network，CNN 对应中 文是卷 积神 经网络。"
+        >>> remove_blank(text)
+        "比如Convolutional Neural Network，CNN对应中文是卷积神经网络。"
+    """
+    # filter blank space between Chinese characters
+    text = re.sub(r'([\u4e00-\u9fa5])([\u0020])', r'\1', text)
+    # remove blank space between English characters and Chinese characters
+    text = re.sub(r'([a-zA-Z])([\u0020])([\u4e00-\u9fa5])', r'\1\3', text)
+    return text
+
+
 if __name__ == "__main__":
     text = "hello, python. 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好，python"
     print(len(text) / len(text.encode('utf-8')))
