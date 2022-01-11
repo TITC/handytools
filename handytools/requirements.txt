@@ -1,0 +1,12 @@
+guppy==0.1.11
+interface==2.11.1
+jieba==0.42.1
+jsonlines==2.0.0
+LAC==2.1.2
+matplotlib==3.3.4
+numpy==1.20.1
+paddle==1.0.2
+pandas==1.2.4
+pympler==1.0.1
+sanic==21.9.3
+tqdm==4.59.0
