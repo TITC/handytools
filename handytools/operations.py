@@ -4,9 +4,9 @@ import pickle
 import traceback
 
 
-class FileOperation(object):
+class Files(object):
     def __init__(self, *args):
-        super(FileOperation, self).__init__(*args)
+        super(Files, self).__init__(*args)
 
     def readlines(self, path, portion=1, end: int = None, show_bar=True, encoding="utf-8"):
         """read file and return a list of lines
@@ -89,8 +89,13 @@ class FileOperation(object):
             return False
 
 
+class Strings(object):
+    def __init__(self, *args):
+        super(Strings, self).__init__(*args)
+
+
 if __name__ == '__main__':
     # test readlines
-    lines = FileOperation.readlines(
+    lines = Files.readlines(
         path="/mnt/f/data/NLP/test_data/fiction/wjtx.txt")
     print(lines)
