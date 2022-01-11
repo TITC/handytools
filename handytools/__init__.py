@@ -1,2 +1,2 @@
-from handytools.file import File
-from handytools.string import String
+from handytools.file_operation import File
+from handytools.string_operation import String

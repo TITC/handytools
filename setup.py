@@ -7,12 +7,14 @@ setup(
     license='MIT',
     # Give a short description about your library
     description='So far, contains string and file processing tools.',
+    long_description=open("README.md", "r", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
     author='Yuhang Tao',                   # Type in your name
     author_email='yuhang.tao.email@gmail.com',      # Type in your E-Mail
     # Provide either the link to your github or to your website
     url='https://github.com/TITC/handytools',
     # I explain this later on
-    download_url='https://github.com/TITC/handytools/archive/refs/heads/main.zip',
+    download_url='https://github.com/TITC/handytools/archive/refs/tags/0.0.1.tar.gz',
     # Keywords that define your package best
     keywords=['nlp', 'file', 'regex'],
     install_requires=[            # I get to this in a second
