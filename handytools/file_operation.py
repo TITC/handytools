@@ -1,12 +1,14 @@
 from tqdm.std import tqdm
 import os
+import pickle
+import traceback
 
 
 class FileOperation(object):
     def __init__(self, *args):
         super(FileOperation, self).__init__(*args)
 
-    def readlines(path, portion=1, end: int = None, show_bar=True, encoding="utf-8"):
+    def readlines(self, path, portion=1, end: int = None, show_bar=True, encoding="utf-8"):
         """read file and return a list of lines
         Args:
             path (string): file path
@@ -25,7 +27,7 @@ class FileOperation(object):
         with open(path, "r+", encoding=encoding) as f:
             if end is None:
                 num_lines = len(
-                    [1 for line in open(path, "r", encoding=encoding)])
+                    [1 for _ in open(path, "r", encoding=encoding)])
                 num_lines *= portion
             else:
                 num_lines = end
@@ -41,6 +43,50 @@ class FileOperation(object):
                         break
                     data_file.append(item.replace("\n", ""))
         return data_file
+
+    def mkdirp(self, dir_path):
+        """make directory if dir_path not exist
+
+        Args:
+            dir_path (string): directory absolute path
+
+        Returns:
+            status: if successfully created directory return True,
+                    nontheless return False
+        Examples:
+            >>> File.mkdirp("/home/directory/test")
+            True
+        """
+        status = True
+        try:
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+        except Exception:
+            status = False
+        return status
+
+    def save2pkl(self, obj: dict, path: str):
+        """save object to pickle file
+
+        Args:
+            obj (dict): object to be saved
+            path (str): file path
+        Returns:
+            status: if successfully created directory return True,
+                    nontheless return False
+        Examples:
+            >>> File.save2pkl({"a": 1}, "test.pkl")
+            True
+        """
+        try:
+            self.mkdirp(os.path.dirname(path))
+            f = open(path, "wb")
+            pickle.dump(obj, f)
+            f.close()
+            return True
+        except Exception:
+            traceback.print_exc()
+            return False
 
 
 if __name__ == '__main__':
