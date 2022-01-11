@@ -7,7 +7,7 @@ setup(
     license='MIT',
     # Give a short description about your library
     description='So far, contains string and file processing tools.',
-    long_description=open("./README.md", "r", encoding="utf-8").read(),
+    long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author='Yuhang Tao',                   # Type in your name
     author_email='yuhang.tao.email@gmail.com',      # Type in your E-Mail
