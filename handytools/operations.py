@@ -3,6 +3,9 @@ import os
 import pickle
 import traceback
 import shutil
+import glob
+import jsonlines
+import json
 
 
 class File(object):
@@ -45,6 +48,73 @@ class File(object):
                     data_file.append(item.replace("\n", ""))
         return data_file
 
+    def glob_read(self, path, read_fun, stop_i=None,  show_bar=False):
+        """read all files in path by glob
+
+        Args:
+            path (str): absolute path
+            read_fun ([type]): different read function based on file type
+            stop_i (int, optional): stop read at file i. Defaults to None.
+            show_bar (bool, optional): display read process or not . Defaults to False.
+
+        Returns:
+            text_list (list): a list of lines in all files
+            pathlist (list): a list of absolute file path
+
+        Examples:
+            >>> text_list, pathlist = glob_read("/home/directory/test", read_fun=read_txt)
+            >>> print(text_list)
+            ['line1', 'line2', 'line3']
+        """
+        text_list = []
+        pathlist = glob.glob(path)
+        if show_bar:
+            w = tqdm(pathlist, desc=u'已加载0个text')
+        else:
+            w = pathlist
+        for i, txt in enumerate(w):
+            if stop_i is not None and i > stop_i:
+                break
+            text_list.extend(read_fun(txt, show_bar=False))
+            if show_bar:
+                w.set_description(u'已加载%s个text' % str(i+1))
+        return text_list, pathlist
+
+    def rjsonl(self, path, show_bar=False):
+        """read jsonlines file
+
+        Args:
+            path (str): file path
+            show_bar (bool, optional): display read process or not . Defaults to False.
+
+        Returns:
+            each time yield a json object
+
+        Examples:
+            >>> for item in File.rjsonl("test.jsonl"):
+            >>>     print(item) 
+            {'a': 1}
+            {'b': 2}
+            {'c': 3}
+        """
+        with open(path, "r+", encoding="utf8") as f:
+            lines = [1 for _ in open(path, "r", encoding="utf-8")]
+            if show_bar:
+                total_nums = len(lines)
+                w = tqdm(lines, total=total_nums, desc=u'已加载0个text')
+            else:
+                w = lines
+            reader = jsonlines.Reader(f)
+            for i, _ in enumerate(w):
+                try:
+                    item = reader.read()
+                    yield item
+                except Exception:
+                    traceback.print_exc()
+                if show_bar:
+                    w.set_description(u'已加载%s个text' % str(i+1))
+        f.close()
+
     def mkdirp(self, dir_path):
         """make directory if dir_path not exist
 
@@ -52,19 +122,19 @@ class File(object):
             dir_path (string): directory absolute path
 
         Returns:
-            status: if successfully created directory return True,
+            state: if successfully created directory return True,
                     nontheless return False
         Examples:
             >>> File.mkdirp("/home/directory/test")
             True
         """
-        status = True
+        state = True
         try:
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
         except Exception:
-            status = False
-        return status
+            state = False
+        return state
 
     def save2pkl(self, obj: dict, path: str):
         """save object to pickle file
@@ -73,7 +143,7 @@ class File(object):
             obj (dict): object to be saved
             path (str): file path
         Returns:
-            status: if successfully created directory return True,
+            state: if successfully created directory return True,
                     nontheless return False
         Examples:
             >>> File.save2pkl({"a": 1}, "test.pkl")
@@ -105,7 +175,7 @@ class File(object):
         ]
         return file_list
 
-    def parent_dir(path: str, layers: int = 1):
+    def parent_dir(self, path: str, layers: int = 1):
         """get parent directory
 
         Args:
@@ -120,6 +190,23 @@ class File(object):
             path = dirname(path)
         return path
 
+    def newpth(self, path, subfolder="", filename: str = ""):
+        """get new path
+
+        Args:
+            path (str): absolute path
+            subfolder (str, optional): sub-folder inside this path . Defaults to "".
+            filename (str, optional): filename inside sub-folder. Defaults to "".
+
+        Returns:
+            str: absolute path /path/subfolder/filename
+
+        Examples:
+            >>> newpth("/home/directory/test", "subfolder", "filename")
+            /home/directory/test/subfolder/filename
+        """
+        return os.path.join(self.parent_dir(path, 1), subfolder, filename)
+
     def get_all_sub_folders(self, path):
         """get all sub folders by path
 
@@ -130,7 +217,7 @@ class File(object):
             list: sub folder list
 
         Examples:
-            >>> get_all_sub_folders("/home/directory/test") 
+            >>> get_all_sub_folders("/home/directory/test")
             ['test1', 'test2']
         """
         sub_directory = []
@@ -147,7 +234,7 @@ class File(object):
             path (str): target path
 
         Returns:
-            status: if successfully created directory return True,
+            state: if successfully created directory return True,
 
         Examples:
             >>> generate_cleanfolder("/home/directory/test")
@@ -182,6 +269,114 @@ class File(object):
                     return False
         return True
 
+    def generate_emptyfolder_bylist(self, root_path, folders_list):
+        """generate empty folder by list
+
+        Args:
+            root_path (str): absolute path
+            folders_list (list): folder list
+
+        Examples:
+            >>> generate_emptyfolder_bylist("/home/directory/test", ["test1", "test2"])
+        """
+        floder_list = []
+        for fol in folders_list:
+            floder_list.append(os.path.join(root_path, fol))
+        self.generate_cleanfolder(floder_list)
+
+    def file_size(self, path):
+        """give file absolute path, return file size
+
+        Args:
+            path (str): absolute path
+
+        Returns:
+            int: file size in bytes
+            int: file size in kb
+            int: file size in mb
+
+        Examples:
+            >>> file_size("/home/directory/test.txt")
+            (9, 0.009, 0.0009)
+        """
+        size = os.path.getsize(path)
+        return size, round(size / (1024**2),
+                           2), round(size / (1024**2),
+                                     2), round(size / (1024**3), 2)
+
+    def savelist(self, obj, path):
+        """save list to file
+
+        Args:
+            obj (list): a list to be saved
+            path (str): file path
+
+        Returns:
+            state: if successfully created directory return True
+
+        Examples:
+            >>> savelist([1,2,3], "test.txt")
+            True
+        """
+        try:
+            self.mkdirp(self.parent_dir(path, 1))
+            with open(path, 'w') as f:
+                for item in tqdm(obj, desc=path.split(os.sep)[-1] + " is saving..."):
+                    f.write("%s\n" % item)
+            return True
+        except Exception as ex:
+            traceback.print_exc()
+            return False
+
+    def append_list2file(self, path, obj, show_bar=False):
+        """append list to file
+
+        Args:
+            path (str): absolute path
+            obj (list): a list to be saved
+            show_bar (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            state: if successfully created directory return True
+
+        Examples:
+            >>> append_list2file("test.txt", [1,2,3])
+            True
+            >>> append_list2file("test.txt", [4,5,6], True)
+            True
+        """
+        self.mkdirp(os.path.dirname(path))
+        try:
+            with open(path, 'a+') as f:
+                if show_bar:
+                    for item in tqdm(obj, desc=path.split(os.sep)[-1] + " is saving..."):
+                        f.write("%s\n" % item)
+                else:
+                    for item in obj:
+                        f.write("%s\n" % item)
+            return True
+        except Exception as ex:
+            traceback.print_exc()
+            return False
+
+    def readjson(path, encoding='utf-8'):
+        """read json file
+
+        Args:
+            path (str): absolute path
+            encoding (str, optional): [description]. Defaults to 'utf-8'.
+
+        Returns:
+            dict: json data
+
+        Examples:
+            >>> readjson("test.json")
+            {'a': 1, 'b': 2}
+        """
+        f = open(path)
+        data = json.load(f, encoding=encoding)
+        return data
+
 
 class Dict(object):
     def __init__(self, *args):
@@ -207,6 +402,71 @@ class Dict(object):
             else:
                 dict2[key] = dict1[key]
         return dict2
+
+    def split_dict(self, dictionary: dict, split_nums: int):
+        """split dict into several parts
+
+        Args:
+            dictionary (dict): a dict to be split
+            split_nums (int): split nums
+
+        Returns:
+            list: each element is a dict
+
+        Examples:
+            >>> d = Dict()
+            >>> d.split_dict({"a": 1, "b": 2, "c": 3}, 2)
+            [{'a': 1, 'b': 2}, {'c': 3}]
+        """
+        dict_lengths = len(dictionary)
+        batch_size = dict_lengths // split_nums
+        batch_dict = []
+        for n in range(split_nums + 1):
+            cur_idx = batch_size * n
+            end_idx = batch_size * (n + 1)
+            cur_batch = dict(list(dictionary.items())[cur_idx: end_idx])
+            batch_dict.append(cur_batch)
+        return batch_dict
+
+    def readpkl(self, dict_path):
+        """read pickle file
+
+        Args:
+            dict_path (str): pickle file path
+
+        Returns:
+            dict_object (dict): pickle file object
+
+        Examples:
+            >>> d = Dict()
+            >>> d.readpkl("test.pkl")
+            {'a': 1, 'b': 2}
+        """
+        with open(dict_path, "rb") as f:
+            dict_object = pickle.load(f)
+        return dict_object
+
+    def viw_pkl(self, path, start=0, end=10):
+        """view dict in pickle file from start to end
+
+        Args:
+            path (str): absolute path
+            start (int, optional): start index of dict. Defaults to 0.
+            end (int, optional): end index of dict. Defaults to 10.
+
+        Returns:
+            result (dict): a small dict
+
+        Examples:
+            >>> d = Dict()
+            >>> d.viw_pkl("/home/directory/test.pkl", 0, 10)
+            {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10}
+        """
+        n_pkl = []
+        with open(path, "rb") as f:
+            dict_object = pickle.load(f)
+            result = dict(list(dict_object.items())[start: end])
+        return result
 
     def get_keys(slef, val, obj: dict):
         """get keys by value in dict
@@ -251,6 +511,7 @@ class String(object):
 if __name__ == '__main__':
     # test readlines
     file = File()
-    lines = file.readlines(
-        path="/mnt/f/data/NLP/test_data/fiction/wjtx.txt")
-    print(lines)
+    data = file.rjsonl(
+        path="/mnt/f/git_repository/handytools/handytools/test.jsonl", show_bar=True)
+    for datum in data:
+        pass

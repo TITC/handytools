@@ -1,6 +1,2 @@
 include LICENSE.txt
 include README.md
-setup.cfg
-setup.py
-handytools/*.py
-recursive-exclude * __pycache__
