@@ -299,14 +299,14 @@ class File(object):
                 traceback.print_exc()
         return rows, column_titles
 
-    def delete_file(filepath: str):
-        """delete file if file exist
+    def delete(self, filepath: str):
+        """delete file or folders if file exist
 
         Args:
             file_path (str): absolute path to the file
         """
         if os.path.exists(filepath):
-            os.remove(filepath)
+            shutil.rmtree(filepath)
 
     def zip(self, zip_path, zip_name):
         """zip files in a directory
