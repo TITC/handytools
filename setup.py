@@ -26,13 +26,7 @@ setup(
     # Keywords that define your package best
     keywords=['nlp', 'file', 'regex'],
     install_requires=[            # I get to this in a second
-        'jsonlines',
-        'matplotlib',
-        'numpy',
-        'pandas',
-        'pympler',
-        'sanic',
-        'tqdm'
+        
     ],
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package

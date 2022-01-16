@@ -1,8 +1,8 @@
-interface==2.11.1
+fitz==0.0.1.dev2
+handytools==0.0.4.5
 jsonlines==2.0.0
-matplotlib==3.3.4
 numpy==1.20.1
 pandas==1.2.4
-pympler==1.0.1
-sanic==21.9.3
+pdfplumber==0.6.0
+Pillow==9.0.0
 tqdm==4.59.0

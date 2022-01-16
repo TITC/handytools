@@ -1,22 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from tkinter.messagebox import NO
+from numpy import asarray
+import math
 import traceback
-import sys
-from collections import defaultdict
 from difflib import SequenceMatcher
-import operator
-import time
 import ast
 import os
 import re
-import numpy as np
 from numpy import random
 from tqdm.std import tqdm
 from urllib.parse import quote, unquote
 from datetime import datetime
-import string
-
 from tqdm.std import tqdm
 import os
 import pickle
@@ -27,34 +21,24 @@ import jsonlines
 import json
 import zipfile
 import csv
-from email.mime import text
-from enum import Flag
-from posixpath import dirname
-import sys
 from typing import Dict
-import numpy as np
-import matplotlib.pyplot as plt
 import pickle
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from os import mkdir, path, read
-from time import sleep, time
 import os
-
+import pdfplumber
 from datetime import datetime
 import shutil
 import glob
 import os
 from tqdm import tqdm
-
 import json
-# importing csv module
 import csv
 import os
 import shutil
 import pandas as pd
 import traceback
 from numpy import random
+import fitz
+from PIL import Image
 
 
 class File(object):
@@ -1210,12 +1194,130 @@ class String(object):
                 changed_text = changed_text.replace(ele, origin_ele)
         return changed_text, True
 
+    def detect_repeat(self, text, expression=r"([\u4e00-\u9fa5])(\1+)"):
+        """detect repeat characters
+
+        Args:
+            text (str): text
+            expression (regexp, optional): regular expression . Defaults to r"([\u4e00-\u9fa5])(\1+)".
+
+        Returns:
+            (list): repeat characters
+
+        Examples:
+            >> > s = String()
+            >> > text = "锄禾日当当午，汗滴禾下下土"
+            >> > s.detect_repeat(text)
+            ['当当', '下下']
+        """
+        pattern = re.compile(expression)
+        matchs = re.finditer(pattern, text)
+        results = []
+        for match in matchs:
+            results.append(match.group())
+        return results
+
+
+class PDF(object):
+    def __init__(self, *args):
+        super(PDF, self).__init__(*args)
+        self.opfile = File()
+
+    def pdf2image(self, pdf_path, output_path=None, zoom_x=1, zoom_y=1, rotation_angle=0):
+        """convert pdf to image
+
+        Args:
+            pdf_path (str): pdf absolute path
+            output_path (str, optional): output path. Defaults to None.
+            zoom_x (float, optional): scale in x axis . Defaults to 1.
+            zoom_y (int, optional): scale in y axis. Defaults to 1.
+            rotation_angle (int, optional): rotation angle. Defaults to 0.
+
+        Returns:
+            images (list of PIL.Image object): images
+
+        Examples:
+            >> > s = PDF()
+            >> > s.pdf2image(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test.jpg")
+        """
+        # 打开PDF文件
+        pdf = fitz.open(pdf_path)
+        # 逐页读取PDF
+        images = []
+        for pg in tqdm(range(0, pdf.pageCount), desc="Converting PDF to Image"):
+            page = pdf[pg]
+            # 设置缩放和旋转系数
+            trans = fitz.Matrix(zoom_x, zoom_y).prerotate(rotation_angle)
+            pm = page.get_pixmap(matrix=trans, alpha=False)
+            # 开始写图像
+            img = Image.frombytes(
+                mode="RGB", size=[pm.width, pm.height], data=pm.samples)
+            if output_path is not None:
+                path = os.path.join(output_path, str(pg)+".png")
+                img.save(path)
+            images.append(img)
+        pdf.close()
+        return images
+
+    def extract_table(self, pdf_path: str, output_path: str = None, extension=".jpg"):
+        """extract tables from pdf
+
+        Args:
+            pdf_path (str): pdf absolute path
+            output_path (str): output path
+            extension (str, optional): if save to output_path, then decide to extension. Defaults to ".jpg".
+
+        Returns:
+            pdf_infos (dict): pdf infos
+
+        Examples:
+            >> > pdf = PDF()
+            >> > pdf.extract_table(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test")
+            {
+                '18_0': {'bbox': (84.60000000000002, 95.63997999999998, 510.72000500000007, 215.16000999999997), 
+                'data': [['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['微晶石', 'XAAR喷头', '图案清晰']]}
+            }
+        """
+        if output_path is not None:
+            self.opfile.generate_cleanfolder(output_path)
+        images = self.pdf2image(pdf_path=pdf_path)
+        pdf_infos = {}
+
+        def isListEmpty(inList):
+            if isinstance(inList, list):  # Is a list
+                return all(map(isListEmpty, inList))
+            elif isinstance(inList, str):
+                return len(inList) == 0
+            return False  # Not a list
+
+        pdf = pdfplumber.open(pdf_path)
+        for i, page in enumerate(tqdm(pdf.pages, desc="parsing pdf page...")):
+            table_infos = page.find_tables(table_settings={})
+            table_data = page.extract_tables(table_settings={})
+            for j, table_info in enumerate(table_infos):
+                page_num = str(table_info.page.page_number)
+                block_num = str(j)
+                if not isListEmpty(table_data):
+                    image = images[i]
+                    image = asarray(image)
+                    image = image[..., ::-1]
+                    x_1, y_1, x_2, y_2 = table_info.bbox
+                    temp = image[math.ceil(y_1):math.floor(
+                        y_2), math.ceil(x_1):math.floor(x_2)]
+                    temp = Image.fromarray(temp, 'RGB')
+                    if output_path is not None:
+                        savepath = os.path.join(output_path, "%s_%s.%s" % (
+                            page_num, block_num, extension))
+                        temp.save(savepath)
+                    pdf_infos["%s_%s" % (page_num, block_num)] = {
+                        "bbox": table_info.bbox, "data": table_data[j]}
+
+        return pdf_infos
+
 
 if __name__ == '__main__':
-    # test readlines
-    s = String()
-    str1 = "最近上映的《黑客帝国：矩阵重启》我‘觉得’比‘以前’(狸猫换太子)要好看很多"
-    str2 = "最近上映的《黑客帝国4：矩阵重启》我“觉得”比‘之前’的(李茂换太子)要好看很多哦"
-    str3 = "我今天很happy，因为我喜欢的notebook终于卖完了。我是在刚刚发布的时候以12900元的价格买的，现在以12800元的价格卖出了。"
-    result = s.proper_nouns_alignment(original_text=str2, changed_text=str1)
-    print(result)
+
+    pdf = PDF()
+    pdf_infos = pdf.extract_table(
+        pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
+    print(pdf_infos)
