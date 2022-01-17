@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from turtle import width
 from numpy import asarray
 import math
 import traceback
@@ -238,7 +239,7 @@ class File(object):
             file_list: file name list
         """
         file_list = [
-            file for file in os.listdir(path)
+            file for file in sorted(os.listdir(path))
             if file.lower().endswith(extension)
         ]
         return file_list
@@ -289,8 +290,12 @@ class File(object):
         Args:
             file_path (str): absolute path to the file
         """
-        if os.path.exists(filepath):
+        if os.path.isdir(filepath):
             shutil.rmtree(filepath)
+        elif os.path.isfile(filepath):
+            os.remove(filepath)
+        else:
+            return False
 
     def zip(self, zip_path, zip_name):
         """zip files in a directory
@@ -302,7 +307,7 @@ class File(object):
         d = datetime.now()
         zip_name = zip_name + str(d)
         save_file = os.path.join(zip_name + '.zip')
-        self.delete_file(save_file)
+        self.delete(save_file)
 
         def zipdir(path, ziph):
             # ziph is zipfile handle
@@ -388,7 +393,7 @@ class File(object):
             str: absolute path / path/subfolder/filename
 
         Examples:
-            >> > newpth("/home/directory/test", "subfolder", "filename")
+            >>> newpth("/home/directory/test", "subfolder", "filename")
             /home/directory/test/subfolder/filename
         """
         return os.path.join(self.parent_dir(path, 1), subfolder, filename)
@@ -403,7 +408,7 @@ class File(object):
             list: sub folder list
 
         Examples:
-            >> > get_all_sub_folders("/home/directory/test")
+            >>> get_all_sub_folders("/home/directory/test")
             ['test1', 'test2']
         """
         sub_directory = []
@@ -423,7 +428,7 @@ class File(object):
             state: if successfully created directory return True,
 
         Examples:
-            >> > generate_cleanfolder("/home/directory/test")
+            >>> generate_cleanfolder("/home/directory/test")
             True
         """
         folder_paths = []
@@ -463,7 +468,7 @@ class File(object):
             folders_list(list): folder list
 
         Examples:
-            >> > generate_emptyfolder_bylist("/home/directory/test", ["test1", "test2"])
+            >>> generate_emptyfolder_bylist("/home/directory/test", ["test1", "test2"])
         """
         floder_list = []
         for fol in folders_list:
@@ -482,7 +487,7 @@ class File(object):
             int: file size in mb
 
         Examples:
-            >> > file_size("/home/directory/test.txt")
+            >>> file_size("/home/directory/test.txt")
             (9, 0.009, 0.0009)
         """
         size = os.path.getsize(path)
@@ -501,7 +506,7 @@ class File(object):
             state: if successfully created directory return True
 
         Examples:
-            >> > savelist([1, 2, 3], "test.txt")
+            >>> savelist([1, 2, 3], "test.txt")
             True
         """
         try:
@@ -526,9 +531,9 @@ class File(object):
             state: if successfully created directory return True
 
         Examples:
-            >> > append_list2file("test.txt", [1, 2, 3])
+            >>> append_list2file("test.txt", [1, 2, 3])
             True
-            >> > append_list2file("test.txt", [4, 5, 6], True)
+            >>> append_list2file("test.txt", [4, 5, 6], True)
             True
         """
         self.mkdirp(os.path.dirname(path))
@@ -556,7 +561,7 @@ class File(object):
             dict: json data
 
         Examples:
-            >> > readjson("test.json")
+            >>> readjson("test.json")
             {'a': 1, 'b': 2}
         """
         f = open(path)
@@ -578,8 +583,8 @@ class Dict(object):
         Returns:
             dict2: combined dict
         Examples:
-            >> > d = Dict()
-            >> > d.union_dict({"a": 1}, {"b": 2})
+            >>> d = Dict()
+            >>> d.union_dict({"a": 1}, {"b": 2})
             {'a': 1, 'b': 2}
         """
         for key in dict1.keys():
@@ -600,8 +605,8 @@ class Dict(object):
             list: each element is a dict
 
         Examples:
-            >> > d = Dict()
-            >> > d.split_dict({"a": 1, "b": 2, "c": 3}, 2)
+            >>> d = Dict()
+            >>> d.split_dict({"a": 1, "b": 2, "c": 3}, 2)
             [{'a': 1, 'b': 2}, {'c': 3}]
         """
         dict_lengths = len(dictionary)
@@ -624,8 +629,8 @@ class Dict(object):
             dict_object(dict): pickle file object
 
         Examples:
-            >> > d = Dict()
-            >> > d.readpkl("test.pkl")
+            >>> d = Dict()
+            >>> d.readpkl("test.pkl")
             {'a': 1, 'b': 2}
         """
         with open(dict_path, "rb") as f:
@@ -644,8 +649,8 @@ class Dict(object):
             result(dict): a small dict
 
         Examples:
-            >> > d = Dict()
-            >> > d.viw_pkl("/home/directory/test.pkl", 0, 10)
+            >>> d = Dict()
+            >>> d.viw_pkl("/home/directory/test.pkl", 0, 10)
             {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5,
                 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10}
         """
@@ -666,8 +671,8 @@ class Dict(object):
             list: keys\
 
         Examples:
-            >> > d = Dict()
-            >> > d.get_keys(1, {"a": 1, "b": 2})
+            >>> d = Dict()
+            >>> d.get_keys(1, {"a": 1, "b": 2})
             ['a']
         """
         return [k for k, v in obj.items() if v == val]
@@ -683,8 +688,8 @@ class Dict(object):
             [type]: [description]
 
         Examples:
-            >> > d = Dict()
-            >> > d.sort_dict_by_value({"a": 1, "b": 2, "c": 3}, increase=False)
+            >>> d = Dict()
+            >>> d.sort_dict_by_value({"a": 1, "b": 2, "c": 3}, increase=False)
             [{'c': 3}, {'b': 2}, {'a': 1}]
         """
         return dict(sorted(d.items(), key=lambda x: x[1], reverse=not increase))
@@ -701,8 +706,8 @@ class String(object):
             float: a random probability
 
         Examples:
-            >> > s = String()
-            >> > s.gen_a_random_probability()
+            >>> s = String()
+            >>> s.gen_a_random_probability()
             0.5
         """
         return random.uniform(0, 1)
@@ -719,8 +724,8 @@ class String(object):
             list: window's content
 
         Examples:
-            >> > s = String()
-            >> > s.get_window_content("a", "abcdefg", 3)
+            >>> s = String()
+            >>> s.get_window_content("a", "abcdefg", 3)
             ['a', 'b', 'c']
         """
         neighbors = []
@@ -746,10 +751,10 @@ class String(object):
             str: current time
 
         Examples:
-            >> > s = String()
-            >> > s.get_current_time()
+            >>> s = String()
+            >>> s.get_current_time()
             '2019-07-24 15:00:00'
-            >> > s.get_current_time(False)
+            >>> s.get_current_time(False)
             '2019-07-24'
         """
         now = datetime.now()
@@ -766,8 +771,8 @@ class String(object):
             str: unquoted string
 
         Examples:
-            >> > s = String()
-            >> > s.url2str("%E6%8A%98%E5%8F%A0%E8%87%AA%E8%A1%8C%E8%BD%A6")
+            >>> s = String()
+            >>> s.url2str("%E6%8A%98%E5%8F%A0%E8%87%AA%E8%A1%8C%E8%BD%A6")
             '折叠自行车'
         """
         unquoted = unquote(text, encoding="utf-8", errors="replace")
@@ -783,8 +788,8 @@ class String(object):
             str: quoted str
 
         Examples:
-            >> > s = String()
-            >> > s.str2url("折叠自行车")
+            >>> s = String()
+            >>> s.str2url("折叠自行车")
             '%E6%8A%98%E5%8F%A0%E8%87%AA%E8%A1%8C%E8%BD%A6'
         """
         quoted = quote(text, encoding="utf-8", errors="replace")
@@ -839,8 +844,8 @@ class String(object):
             str: coloured text
 
         Examples:
-            >> > s = String()
-            >> > s.colourful_text("比如Convolutional Neural Network，CNN对应中文是卷积神经网络。", "red")
+            >>> s = String()
+            >>> s.colourful_text("比如Convolutional Neural Network，CNN对应中文是卷积神经网络。", "red")
             '\x1b[31m比如Convolutional Neural Network，CNN对应中文是卷积神经网络。\x1b[0m'
         """
         colourful = {
@@ -862,20 +867,20 @@ class String(object):
             value (str): original type
 
         Examples:
-            >> > s = String()
-            >> > s.type_restore("1")
+            >>> s = String()
+            >>> s.type_restore("1")
             1
-            >> > s.type_restore("1.0")
+            >>> s.type_restore("1.0")
             1.0
-            >> > s.type_restore("True")
+            >>> s.type_restore("True")
             True
-            >> > s.type_restore("False")
+            >>> s.type_restore("False")
             False
-            >> > s.type_restore("None")
+            >>> s.type_restore("None")
             None
-            >> > s.type_restore("[1, 2, 3]")
+            >>> s.type_restore("[1, 2, 3]")
             [1, 2, 3]
-            >> > s.type_restore("{'a': 1, 'b': 2}")
+            >>> s.type_restore("{'a': 1, 'b': 2}")
             {'a': 1, 'b': 2}
         """
         try:
@@ -896,15 +901,15 @@ class String(object):
             str: extracted text
 
         Examples:
-            >> > s = String()
-            >> > text ="我今天很happy，因为我喜欢的notebook终于卖完了。我是在刚刚发布的时候以12900元的价格买的，现在以12800元的价格卖出了。"
-            >> > s.extract(text, type="en")
+            >>> s = String()
+            >>> text ="我今天很happy，因为我喜欢的notebook终于卖完了。我是在刚刚发布的时候以12900元的价格买的，现在以12800元的价格卖出了。"
+            >>> s.extract(text, type="en")
             (['happy', 'notebook'], True)
-            >> > s.extract(text, type="zh")
+            >>> s.extract(text, type="zh")
             (['我今天很', '因为我喜欢的', '终于卖完了', '我是在刚刚发布的时候以', '元的价格买的', '现在以', '元的价格卖出了'], True)
-            >> > s.extract(text, type="zh", expression="num")
+            >>> s.extract(text, type="zh", expression="num")
             (['12900', '12800'], True)
-            >> > s.extract(text, type="zh", expression="punctuation")
+            >>> s.extract(text, type="zh", expression="punctuation")
             (['，', '。', '，', '。'], True)
         """
         if type is not None:
@@ -928,8 +933,8 @@ class String(object):
             change_text (str): full-width text
 
         Examples:
-            >> > s = String()
-            >> > s.half_to_full("abc")
+            >>> s = String()
+            >>> s.half_to_full("abc")
             'ａｂｃ'
         """
         change_text = ""
@@ -981,10 +986,10 @@ class String(object):
             str: longest common subsequence
 
         Examples:
-            >> > s = String()
-            >> > s.lc_subsequence("我今天吃了碗饭", "我昨天也吃了一碗饭", "_")
+            >>> s = String()
+            >>> s.lc_subsequence("我今天吃了碗饭", "我昨天也吃了一碗饭", "_")
             我_天_吃了_碗饭
-            >> > s.lc_subsequence("我今天吃了碗饭", "我昨天也吃了一碗饭", "")
+            >>> s.lc_subsequence("我今天吃了碗饭", "我昨天也吃了一碗饭", "")
             我天吃了碗饭
         """
         m, n = len(str1), len(str2)
@@ -1033,8 +1038,8 @@ class String(object):
             int: length of longest common substring
 
         Examples:
-            >> > s = String()
-            >> > s.lc_substring("我今天是吃了碗饭", "我昨天也是吃了一碗饭")
+            >>> s = String()
+            >>> s.lc_substring("我今天是吃了碗饭", "我昨天也是吃了一碗饭")
             ('是吃了', 3)
         """
         m = [[0 for i in range(len(str2) + 1)]
@@ -1061,9 +1066,9 @@ class String(object):
             int: sub-text's index
 
         Examples:
-            >> > s = String()
-            >> > sub_idxs =s.index_substring("我今天吃了碗饭，我昨天也吃了一碗饭", "碗饭")
-            >> > [_ for _ in sub_idxs]
+            >>> s = String()
+            >>> sub_idxs =s.index_substring("我今天吃了碗饭，我昨天也吃了一碗饭", "碗饭")
+            >>> [_ for _ in sub_idxs]
             [5, 15]
         """
         start = 0
@@ -1086,9 +1091,9 @@ class String(object):
             str: content in bracket
 
         Examples:
-            >> > s = String()
-            >> > text = "如果说【上天】愿意再次给我（一次机会），那么我(希望)保持现状"
-            >> > s.extact_content_in_bracket(text=text)
+            >>> s = String()
+            >>> text = "如果说【上天】愿意再次给我（一次机会），那么我(希望)保持现状"
+            >>> s.extact_content_in_bracket(text=text)
             ['【上天】', '（一次机会）', '(希望)']
         """
         if type is not None:
@@ -1115,9 +1120,9 @@ class String(object):
             str: text split by pattern
 
         Examples:
-            >> > s = String()
-            >> > text = "收快递的时候最怕收不到货，所以购物的时候一定要把地址写清楚，这样才会精准的送到你手里，我告诉大家以后怎么写：“本宇宙-拉尼凯亚超星系团-室女座星系团-本星系群-银河系-猎户臂-太阳系-第三行星-地球-亚洲板块-中国-xxx-xxx-xxx”这样可以保证不会送到其他宇宙去"
-            >> > s.split_text(text=text)
+            >>> s = String()
+            >>> text = "收快递的时候最怕收不到货，所以购物的时候一定要把地址写清楚，这样才会精准的送到你手里，我告诉大家以后怎么写：“本宇宙-拉尼凯亚超星系团-室女座星系团-本星系群-银河系-猎户臂-太阳系-第三行星-地球-亚洲板块-中国-xxx-xxx-xxx”这样可以保证不会送到其他宇宙去"
+            >>> s.split_text(text=text)
             ['收快递的时候最怕收不到货', '所以购物的时候一定要把地址写清楚', '这样才会精准的送到你手里', '我告诉大家以后怎么写：“本宇宙-拉尼凯亚超星系团-室女座星系团-本星系群-银河系-猎户臂-太阳系-第三行星-地球-亚洲板块-中国-xxx-xxx-xxx”这样可以保证不会送到其他宇宙去']
         """
         txts = re.split(pattern, text)
@@ -1134,8 +1139,8 @@ class String(object):
             float: similarity
 
         Examples:
-            >> > s = String()
-            >> > s.similar("我今天是吃了碗饭", "我昨天也是吃了一碗饭")
+            >>> s = String()
+            >>> s.similar("我今天是吃了碗饭", "我昨天也是吃了一碗饭")
             0.75
         """
         return SequenceMatcher(None, str1, str2).ratio()
@@ -1150,14 +1155,14 @@ class String(object):
             str: int,float,complex or None
 
         Examples:
-            >> > s = String()
-            >> > s.str_num_type("1")
+            >>> s = String()
+            >>> s.str_num_type("1")
             'int'
-            >> > s.str_num_type("1.0")
+            >>> s.str_num_type("1.0")
             'float'
-            >> > s.str_num_type("1+1j")
+            >>> s.str_num_type("1+1j")
             'complex'
-            >> > s.str_num_type("1.0.5.355")
+            >>> s.str_num_type("1.0.5.355")
             None
 
         """
@@ -1205,9 +1210,9 @@ class String(object):
             (list): repeat characters
 
         Examples:
-            >> > s = String()
-            >> > text = "锄禾日当当午，汗滴禾下下土"
-            >> > s.detect_repeat(text)
+            >>> s = String()
+            >>> text = "锄禾日当当午，汗滴禾下下土"
+            >>> s.detect_repeat(text)
             ['当当', '下下']
         """
         pattern = re.compile(expression)
@@ -1223,7 +1228,13 @@ class PDF(object):
         super(PDF, self).__init__(*args)
         self.opfile = File()
 
-    def pdf2image(self, pdf_path, output_path=None, zoom_x=1, zoom_y=1, rotation_angle=0):
+
+class PDF(object):
+    def __init__(self, *args):
+        super(PDF, self).__init__(*args)
+        self.opfile = File()
+
+    def pdf2image(self, pdf_path, output_path=None, zoom_x=1, zoom_y=1, size: tuple = None, rotation_angle=0):
         """convert pdf to image
 
         Args:
@@ -1231,22 +1242,29 @@ class PDF(object):
             output_path (str, optional): output path. Defaults to None.
             zoom_x (float, optional): scale in x axis . Defaults to 1.
             zoom_y (int, optional): scale in y axis. Defaults to 1.
+            size (tuple, optional): image size. Defaults to None.
             rotation_angle (int, optional): rotation angle. Defaults to 0.
 
         Returns:
             images (list of PIL.Image object): images
 
         Examples:
-            >> > s = PDF()
-            >> > s.pdf2image(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test.jpg")
+            >>> s = PDF()
+            >>> s.pdf2image(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test.jpg")
         """
         # 打开PDF文件
         pdf = fitz.open(pdf_path)
         # 逐页读取PDF
         images = []
+        if output_path is not None:
+            self.opfile.generate_cleanfolder(output_path)
         for pg in tqdm(range(0, pdf.pageCount), desc="Converting PDF to Image"):
             page = pdf[pg]
             # 设置缩放和旋转系数
+            _, _, page_width, page_height = page.rect
+            if size is not None:
+                zoom_x = size[0] / page_width
+                zoom_y = size[1] / page_height
             trans = fitz.Matrix(zoom_x, zoom_y).prerotate(rotation_angle)
             pm = page.get_pixmap(matrix=trans, alpha=False)
             # 开始写图像
@@ -1271,8 +1289,8 @@ class PDF(object):
             pdf_infos (dict): pdf infos
 
         Examples:
-            >> > pdf = PDF()
-            >> > pdf.extract_table(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test")
+            >>> pdf = PDF()
+            >>> pdf.extract_table(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test")
             {
                 '18_0': {'bbox': (84.60000000000002, 95.63997999999998, 510.72000500000007, 215.16000999999997), 
                 'data': [['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['xxx', 'xxx', 'xxx'], ['微晶石', 'XAAR喷头', '图案清晰']]}
@@ -1292,8 +1310,11 @@ class PDF(object):
 
         pdf = pdfplumber.open(pdf_path)
         for i, page in enumerate(tqdm(pdf.pages, desc="parsing pdf page...")):
-            table_infos = page.find_tables(table_settings={})
-            table_data = page.extract_tables(table_settings={})
+            try:
+                table_infos = page.find_tables(table_settings={})
+                table_data = page.extract_tables(table_settings={})
+            except Exception as e:
+                continue
             for j, table_info in enumerate(table_infos):
                 page_num = str(table_info.page.page_number)
                 block_num = str(j)
@@ -1318,6 +1339,7 @@ class PDF(object):
 if __name__ == '__main__':
 
     pdf = PDF()
-    pdf_infos = pdf.extract_table(
-        pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
-    print(pdf_infos)
+    pdf.pdf2image(pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
+    # pdf_infos = pdf.extract_table(
+    #     pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
+    # print(pdf_infos)
