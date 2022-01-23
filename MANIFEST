@@ -4,4 +4,5 @@ README.md
 setup.cfg
 setup.py
 handytools/__init__.py
-handytools/operations.py
+handytools/op.py
+handytools/thread.py

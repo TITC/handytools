@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import cv2
 from turtle import width
 from numpy import asarray
 import math
@@ -40,6 +41,7 @@ import traceback
 from numpy import random
 import fitz
 from PIL import Image
+import numpy as np
 
 
 class File(object):
@@ -61,26 +63,20 @@ class File(object):
             >>> print(lines)
             ['line1', 'line2', 'line3']
         """
-        data_file = []
+        data = []
+        desc = path.split(os.sep)[-1] + " is loading..."
         with open(path, "r+", encoding=encoding) as f:
-            if end is None:
-                num_lines = len(
-                    [1 for _ in open(path, "r", encoding=encoding)])
-                num_lines *= portion
-            else:
-                num_lines = end
-            if show_bar:
-                for idx, item in enumerate(
-                        tqdm(f, total=num_lines, desc=path.split(os.sep)[-1] + " is loading...")):
-                    if idx >= num_lines:
-                        break
-                    data_file.append(item.replace("\n", ""))
-            else:
-                for idx, item in enumerate(f):
-                    if idx >= num_lines:
-                        break
-                    data_file.append(item.replace("\n", ""))
-        return data_file
+            num = end if end is not None and not show_bar else len(
+                [1 for _ in open(path, "r", encoding=encoding)])*portion
+            w = f if not show_bar else tqdm(
+                f, total=num, desc=u'%s 0 text' % desc)
+            for i, _ in enumerate(w):
+                if i >= num:
+                    break
+                data.append(_.replace("\n", ""))
+                if show_bar:
+                    w.set_description(u'%s %s text' % (desc, str(i+1)))
+        return data
 
     def glob_read(self, path, read_fun, stop_i=None,  show_bar=False):
         """read all files in path by glob
@@ -133,11 +129,8 @@ class File(object):
         """
         with open(path, "r+", encoding="utf8") as f:
             lines = [1 for _ in open(path, "r", encoding="utf-8")]
-            if show_bar:
-                total_nums = len(lines)
-                w = tqdm(lines, total=total_nums, desc=u'已加载0个text')
-            else:
-                w = lines
+            w = lines if not show_bar else tqdm(
+                lines, total=len(lines), desc=u'已加载0个text')
             reader = jsonlines.Reader(f)
             for i, _ in enumerate(w):
                 try:
@@ -165,7 +158,7 @@ class File(object):
         with jsonlines.open(path, 'w') as writer:
             writer.write_all(data)
 
-    def savejsons(self, jsons, path, mode="w"):
+    def wjsons(self, jsons, path, mode="w"):
         """save json object to a file
 
         Args:
@@ -184,7 +177,7 @@ class File(object):
                 json.dump(entry, outfile)
                 outfile.write('\n')
 
-    def mkdirp(self, dir_path):
+    def mkdir(self, dir_path):
         """make directory if dir_path not exist
 
         Args:
@@ -215,7 +208,7 @@ class File(object):
             state: if successfully created directory return True,
                     nontheless return False
         Examples:
-            >>> File.save2pkl({"a": 1}, "test.pkl")
+            >>> save2pkl({"a": 1}, "test.pkl")
             True
         """
         try:
@@ -297,26 +290,18 @@ class File(object):
         else:
             return False
 
-    def zip(self, zip_path, zip_name):
+    def zip(self, src_path: str, tgt_path: str):
         """zip files in a directory
 
         Args:
             zip_path (str): absolute path to the directory
             zip_name (str): zip file name
         """
-        d = datetime.now()
-        zip_name = zip_name + str(d)
-        save_file = os.path.join(zip_name + '.zip')
-        self.delete(save_file)
-
-        def zipdir(path, ziph):
-            # ziph is zipfile handle
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    ziph.write(os.path.join(root, file))
-        zipf = zipfile.ZipFile(zip_name + '.zip', 'w', zipfile.ZIP_DEFLATED)
-        zipdir(zip_path, zipf)
-        zipf.close()
+        date = datetime.now()
+        zip_name = src_path.split(os.sep)[-1] + str(date)+".zip"
+        tgt_path = os.path.join(tgt_path, zip_name)
+        self.delete(tgt_path)
+        shutil.make_archive(tgt_path, 'zip', src_path)
 
     def copy(self, source_path: str, target_path: str):
         """copy files in a directory
@@ -550,7 +535,7 @@ class File(object):
             traceback.print_exc()
             return False
 
-    def readjson(path, encoding='utf-8'):
+    def rjson(path, encoding='utf-8'):
         """read json file
 
         Args:
@@ -561,12 +546,29 @@ class File(object):
             dict: json data
 
         Examples:
-            >>> readjson("test.json")
+            >>> rjson("test.json")
             {'a': 1, 'b': 2}
         """
         f = open(path)
         data = json.load(f, encoding=encoding)
         return data
+
+    def rpkl(self, dict_path):
+        """read pickle file
+
+        Args:
+            dict_path(str): pickle file path
+
+        Returns:
+            dict_object(dict): pickle file object
+
+        Examples:
+            >>> rpkl("test.pkl")
+            {'a': 1, 'b': 2}
+        """
+        with open(dict_path, "rb") as f:
+            dict_object = pickle.load(f)
+        return dict_object
 
 
 class Dict(object):
@@ -618,24 +620,6 @@ class Dict(object):
             cur_batch = dict(list(dictionary.items())[cur_idx: end_idx])
             batch_dict.append(cur_batch)
         return batch_dict
-
-    def readpkl(self, dict_path):
-        """read pickle file
-
-        Args:
-            dict_path(str): pickle file path
-
-        Returns:
-            dict_object(dict): pickle file object
-
-        Examples:
-            >>> d = Dict()
-            >>> d.readpkl("test.pkl")
-            {'a': 1, 'b': 2}
-        """
-        with open(dict_path, "rb") as f:
-            dict_object = pickle.load(f)
-        return dict_object
 
     def viw_pkl(self, path, start=0, end=10):
         """view dict in pickle file from start to end
@@ -1228,37 +1212,19 @@ class PDF(object):
         super(PDF, self).__init__(*args)
         self.opfile = File()
 
-
-class PDF(object):
-    def __init__(self, *args):
-        super(PDF, self).__init__(*args)
-        self.opfile = File()
-
-    def pdf2image(self, pdf_path, output_path=None, zoom_x=1, zoom_y=1, size: tuple = None, rotation_angle=0):
-        """convert pdf to image
-
-        Args:
-            pdf_path (str): pdf absolute path
-            output_path (str, optional): output path. Defaults to None.
-            zoom_x (float, optional): scale in x axis . Defaults to 1.
-            zoom_y (int, optional): scale in y axis. Defaults to 1.
-            size (tuple, optional): image size. Defaults to None.
-            rotation_angle (int, optional): rotation angle. Defaults to 0.
-
-        Returns:
-            images (list of PIL.Image object): images
-
-        Examples:
-            >>> s = PDF()
-            >>> s.pdf2image(pdf_path="../data/pdf/test.pdf", output_path="../data/pdf/test.jpg")
-        """
+    def pdf2image(self, pdf_path, pdf_stream=None, output_path=None, zoom_x=1, zoom_y=1, size: tuple = None, rotation_angle=0):
         # 打开PDF文件
-        pdf = fitz.open(pdf_path)
-        # 逐页读取PDF
+        if pdf_path is not None:
+            pdf = fitz.open(pdf_path)
+        elif pdf_stream is not None:
+            pdf = fitz.open(stream=pdf_stream, filetype="pdf")
+        else:
+            raise Exception("pdf_path or pdf_stream must be not None")
+            # 逐页读取PDF
         images = []
         if output_path is not None:
             self.opfile.generate_cleanfolder(output_path)
-        for pg in tqdm(range(0, pdf.pageCount), desc="Converting PDF to Image"):
+        for pg in range(0, pdf.pageCount):
             page = pdf[pg]
             # 设置缩放和旋转系数
             _, _, page_width, page_height = page.rect
@@ -1336,10 +1302,69 @@ class PDF(object):
         return pdf_infos
 
 
+class Image(object):
+    def __init__(self, *args):
+        super(Image, self).__init__(*args)
+
+    def dilation(self, image, thresh=250, save_path=None, morph_size=(8, 8), iterations=1):
+        """ dialate given image
+
+        Args:
+            image (np.array): image to dialate
+            save_path (str): path to save dialated image
+            morph_size (tuple): size of the kernel
+            iterations (int): number of iterations
+
+        Returns:
+            np.array: dialated image
+
+        Example:
+            >>> dilation(image=image, save_path=save_path, morph_size=(8, 8), iterations=1)
+        """
+        # convert RGB to grayscale image
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # convert to binary image
+        image = cv2.threshold(
+            image, thresh, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        # dilate the text to make it solid spot
+        image = image.copy()
+        struct = cv2.getStructuringElement(cv2.MORPH_RECT, morph_size)
+        image = cv2.dilate(~image, struct, anchor=(-1, -1),
+                           iterations=iterations)
+        image = ~image
+        if save_path is not None:
+            cv2.imwrite(save_path, image)
+        return image
+
+    def is_blank_image(self, image):
+        """ check if image is blank
+
+        Args:
+            image (np.array): image to check
+
+        Returns:
+            bool: True if image is blank, False otherwise
+            white_percentage : percentage of white pixels
+
+        Example:
+            >>> is_blank_image(image=image)
+        """
+        # binary image
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # get the shape of image
+        shape = image.shape
+        # get the number of pixels value = 255
+        white_pixels = np.sum(image == 255)
+        white_percentage = white_pixels / (shape[0] * shape[1])
+        if white_percentage > 0.99:
+            return True, white_percentage
+        else:
+            return False, white_percentage
+
+
 if __name__ == '__main__':
 
-    pdf = PDF()
-    pdf.pdf2image(pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
-    # pdf_infos = pdf.extract_table(
-    #     pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf")
-    # print(pdf_infos)
+    f = File()
+    path = "/mnt/f/data/NLP/test_data/fiction/wjtx.txt"
+    lines = f.readlines(path, show_bar=False)
+    print(len(lines))

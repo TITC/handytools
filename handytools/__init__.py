@@ -1,1 +1,2 @@
-from handytools.operations import *
+from handytools.op import *
+from handytools.thread import *
