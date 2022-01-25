@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import base64
+from line_profiler import LineProfiler
 import cv2
 from turtle import width
 from numpy import asarray
@@ -187,7 +189,7 @@ class File(object):
             state: if successfully created directory return True,
                     nontheless return False
         Examples:
-            >>> File.mkdirp("/home/directory/test")
+            >>> File.mkdir("/home/directory/test")
             True
         """
         state = True
@@ -212,7 +214,7 @@ class File(object):
             True
         """
         try:
-            self.mkdirp(os.path.dirname(path))
+            self.mkdir(os.path.dirname(path))
             f = open(path, "wb")
             pickle.dump(obj, f)
             f.close()
@@ -318,7 +320,7 @@ class File(object):
             True
         """
 
-        self.mkdirp(target_path)
+        self.mkdir(target_path)
         if os.path.exists(source_path):
             # root :refer to current iteration directory
             # dirs :refer to all direct sub directories
@@ -495,7 +497,7 @@ class File(object):
             True
         """
         try:
-            self.mkdirp(self.parent_dir(path, 1))
+            self.mkdir(self.parent_dir(path, 1))
             with open(path, 'w') as f:
                 for item in tqdm(obj, desc=path.split(os.sep)[-1] + " is saving..."):
                     f.write("%s\n" % item)
@@ -521,7 +523,7 @@ class File(object):
             >>> append_list2file("test.txt", [4, 5, 6], True)
             True
         """
-        self.mkdirp(os.path.dirname(path))
+        self.mkdir(os.path.dirname(path))
         try:
             with open(path, 'a+') as f:
                 if show_bar:
@@ -1302,9 +1304,9 @@ class PDF(object):
         return pdf_infos
 
 
-class Image(object):
+class Figure(object):
     def __init__(self, *args):
-        super(Image, self).__init__(*args)
+        super(Figure, self).__init__(*args)
 
     def dilation(self, image, thresh=250, save_path=None, morph_size=(8, 8), iterations=1):
         """ dialate given image
@@ -1363,8 +1365,12 @@ class Image(object):
 
 
 if __name__ == '__main__':
+    lp = LineProfiler()
 
-    f = File()
-    path = "/mnt/f/data/NLP/test_data/fiction/wjtx.txt"
-    lines = f.readlines(path, show_bar=False)
-    print(len(lines))
+    p = PDF()
+    # lp.add_function(DTA.process_pdf)
+    # lp.add_function(DTA._process_images)
+    lp_wrapper = lp(p.pdf2image)
+    lp_wrapper(pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf",
+               size=(1654, 2339))
+    lp.print_stats()
