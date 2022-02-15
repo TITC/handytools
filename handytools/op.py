@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import base64
+import time
 from line_profiler import LineProfiler
 import cv2
 from turtle import width
@@ -67,9 +68,9 @@ class File(object):
         """
         data = []
         desc = path.split(os.sep)[-1] + " is loading..."
-        with open(path, "r+", encoding=encoding) as f:
+        with open(path, "r+", encoding=encoding, errors='ignore') as f:
             num = end if end is not None and not show_bar else len(
-                [1 for _ in open(path, "r", encoding=encoding)])*portion
+                [1 for _ in f])*portion
             w = f if not show_bar else tqdm(
                 f, total=num, desc=u'%s 0 text' % desc)
             for i, _ in enumerate(w):
@@ -300,10 +301,14 @@ class File(object):
             zip_name (str): zip file name
         """
         date = datetime.now()
-        zip_name = src_path.split(os.sep)[-1] + str(date)+".zip"
+        zip_name = src_path.split(os.sep)[-1] + str(date)
         tgt_path = os.path.join(tgt_path, zip_name)
         self.delete(tgt_path)
         shutil.make_archive(tgt_path, 'zip', src_path)
+        return tgt_path
+
+    def unzip(self, src_path, tgt_path, archive_format="zip"):
+        return shutil.unpack_archive(src_path, tgt_path, archive_format)
 
     def copy(self, source_path: str, target_path: str):
         """copy files in a directory
@@ -537,7 +542,7 @@ class File(object):
             traceback.print_exc()
             return False
 
-    def rjson(path, encoding='utf-8'):
+    def rjson(self, path, encoding='utf-8'):
         """read json file
 
         Args:
@@ -685,7 +690,7 @@ class String(object):
     def __init__(self, *args):
         super(String, self).__init__(*args)
 
-    def gen_a_random_probability():
+    def gen_a_random_probability(self):
         """generate a random probability obey uniform distribution
 
         Returns:
@@ -819,7 +824,7 @@ class String(object):
                 return False
         return True
 
-    def colourful_text(text, color):
+    def colourful_text(self, text, color):
         """add color to text
 
         Args:
@@ -1365,12 +1370,29 @@ class Figure(object):
 
 
 if __name__ == '__main__':
+    # def [A-Za-z|\w]+\([^self]
+
     lp = LineProfiler()
 
     p = PDF()
     # lp.add_function(DTA.process_pdf)
     # lp.add_function(DTA._process_images)
-    lp_wrapper = lp(p.pdf2image)
-    lp_wrapper(pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf",
-               size=(1654, 2339))
-    lp.print_stats()
+    # lp_wrapper = lp(p.pdf2image)
+    # lp_wrapper(pdf_path="/mnt/f/data/CV/pdfs/1100000206088611.pdf",
+    #            size=(1654, 2339))
+    # lp.print_stats()
+    opf = File()
+    # imgs = opf.files_with_extension("/mnt/o/OneDrive/图片/壁纸/", extension=".jpg")
+    start_time = time.time()
+    tgt_path = opf.zip("/mnt/o/壁纸/", "/mnt/o/test")
+    opf.unzip(tgt_path+".zip", "/mnt/o/test_unzip")
+    end_time = time.time()
+    print("time: %s" % (end_time - start_time))
+    start_time = time.time()
+
+    for filename in opf.files_with_extension("/mnt/o/OneDrive/图片/壁纸/", extension=".*"):
+        abspath = os.path.join("/mnt/o/OneDrive/图片/壁纸/", filename)
+        data = base64.b64encode(abspath)
+        base64.b64decode(data)
+    end_time = time.time()
+    print("time: %s" % (end_time - start_time))

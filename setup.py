@@ -5,12 +5,12 @@ from distutils.core import setup
 from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
-
+version = '0.0.5.1'
 setup(
     name='handytools',         # How you named your package folder (MyLib)
     packages=['handytools'],   # Chose the same as "name"
     # Start with a small number and increase it with every change you make
-    version='0.0.5.0',
+    version=version,
     # Chose a license from here: https://help.github.com/articles/licensing-a-repository
     license='MIT',
     # Give a short description about your library
@@ -22,7 +22,7 @@ setup(
     # Provide either the link to your github or to your website
     url='https://github.com/TITC/handytools',
     # I explain this later on
-    download_url='https://github.com/TITC/handytools/archive/refs/tags/0.0.5.0.tar.gz',
+    download_url='https://github.com/TITC/handytools/archive/refs/tags/%s.tar.gz' % version,
     # Keywords that define your package best
     keywords=['nlp', 'file', 'regex'],
     install_requires=[            # I get to this in a second
@@ -35,7 +35,8 @@ setup(
         "pandas",
         "pdfplumber",
         "Pillow",
-        "tqdm"
+        "tqdm",
+        "PyMuPDF"
     ],
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
