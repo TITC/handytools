@@ -829,7 +829,7 @@ class String(object):
 
         Args:
             text (str): [description]
-            color (str): red, green, yello, blue, black, none
+            color (str): red, green, yellow, blue, black, none
 
         Returns:
             str: coloured text
@@ -842,7 +842,7 @@ class String(object):
         colourful = {
             "red": u"\033[1;31;1m%s\033[0m",
             "green": u"\033[1;32;1m%s\033[0m",
-            "yello": u"\033[1;33;1m%s\033[0m",
+            "yellow": u"\033[1;33;1m%s\033[0m",
             "blue": u"\033[1;34;1m%s\033[0m",
             "black": u"\033[1;30;1m%s\033[0m",
         }
