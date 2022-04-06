@@ -5,7 +5,7 @@ from distutils.core import setup
 from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
-version = '0.0.5.1'
+version = '0.0.5.2'
 setup(
     name='handytools',         # How you named your package folder (MyLib)
     packages=['handytools'],   # Chose the same as "name"
@@ -26,17 +26,12 @@ setup(
     # Keywords that define your package best
     keywords=['nlp', 'file', 'regex'],
     install_requires=[            # I get to this in a second
-        "fitz",
         "jsonlines",
         "line_profiler",
         "numpy",
         "pandas",
-        "opencv_python",
         "pandas",
-        "pdfplumber",
-        "Pillow",
         "tqdm",
-        "PyMuPDF"
     ],
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
