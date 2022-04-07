@@ -193,7 +193,7 @@ def save2pkl(obj: dict, path: str):
         True
     """
     try:
-        self.mkdir(os.path.dirname(path))
+        mkdir(os.path.dirname(path))
         f = open(path, "wb")
         pickle.dump(obj, f)
         f.close()
@@ -285,7 +285,7 @@ def zip(src_path: str, tgt_path: str):
     date = datetime.now()
     zip_name = src_path.split(os.sep)[-1] + str(date)
     tgt_path = os.path.join(tgt_path, zip_name)
-    self.delete(tgt_path)
+    delete(tgt_path)
     shutil.make_archive(tgt_path, 'zip', src_path)
     return tgt_path
 
@@ -309,7 +309,7 @@ def copy(source_path: str, target_path: str):
         True
     """
 
-    self.mkdir(target_path)
+    mkdir(target_path)
     if os.path.exists(source_path):
         # root :refer to current iteration directory
         # dirs :refer to all direct sub directories
@@ -375,7 +375,7 @@ def newpth(path, subfolder="", filename: str = ""):
         >>> newpth("/home/directory/test", "subfolder", "filename")
         /home/directory/test/subfolder/filename
     """
-    return os.path.join(self.parent_dir(path, 1), subfolder, filename)
+    return os.path.join(parent_dir(path, 1), subfolder, filename)
 
 
 def get_all_sub_folders(path):
@@ -455,7 +455,7 @@ def generate_emptyfolder_bylist(root_path, folders_list):
     floder_list = []
     for fol in folders_list:
         floder_list.append(os.path.join(root_path, fol))
-    self.generate_cleanfolder(floder_list)
+    generate_cleanfolder(floder_list)
 
 
 def file_size(path):
@@ -494,7 +494,7 @@ def savelist(obj, path):
         True
     """
     try:
-        self.mkdir(self.parent_dir(path, 1))
+        mkdir(parent_dir(path, 1))
         with open(path, 'w') as f:
             for item in tqdm(obj, desc=path.split(os.sep)[-1] + " is saving..."):
                 f.write("%s\n" % item)
@@ -521,7 +521,7 @@ def append_list2file(path, obj, show_bar=False):
         >>> append_list2file("test.txt", [4, 5, 6], True)
         True
     """
-    self.mkdir(os.path.dirname(path))
+    mkdir(os.path.dirname(path))
     try:
         with open(path, 'a+') as f:
             if show_bar:
@@ -1167,7 +1167,7 @@ def str_num_type(string):
 
     """
     types = [int, float, complex]
-    _string = self.type_restore(string)
+    _string = type_restore(string)
 
     for type in types:
         if isinstance(_string, type):
@@ -1189,9 +1189,9 @@ def proper_nouns_alignment(original_text, changed_text):
 
     expression_types = ["bracket", "quotation"]
     for regular_exp in expression_types:
-        result1 = self.extact_content_between_marks(
+        result1 = extact_content_between_marks(
             original_text, type=regular_exp)
-        result2 = self.extact_content_between_marks(
+        result2 = extact_content_between_marks(
             changed_text, type=regular_exp)
         if len(result1) != len(result2):
             return changed_text, False

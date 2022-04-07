@@ -5,7 +5,7 @@ from distutils.core import setup
 from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
-version = '0.0.5.2'
+version = '0.0.5.3'
 setup(
     name='handytools',         # How you named your package folder (MyLib)
     packages=['handytools'],   # Chose the same as "name"
