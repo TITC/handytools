@@ -3,13 +3,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 import smtplib
-from op import File
 
 
 class Mail(object):
     def __init__(self, *args):
         super(Mail, self).__init__(*args)
-        self.opf = File()
 
     def send(self, subject, from_email, to_email, pwd, message, files=[]):
         """send email with attachments

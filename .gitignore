@@ -1,2 +1,4 @@
 *.tar.gz
 handytools/__pycache__/*
+handytools.egg-info/*
+
